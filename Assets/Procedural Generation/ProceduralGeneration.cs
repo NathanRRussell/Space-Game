@@ -1,43 +1,52 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class ProceduralGeneration : MonoBehaviour
 {
-    [SerializeField] int width, height;
+    [SerializeField] int width;
     [SerializeField] int minRockHeight, maxRockHeight;
-    [SerializeField] GameObject lunarSoil, lunarCrust, lunarRock;
+    [SerializeField] Tilemap lunarSoilTilemap, lunarCrustTilemap, lunarRockTilemap;
+    [SerializeField] Tile lunarSoil, lunarCrust, lunarRock;
+    [Range(0, 100)]
+    [SerializeField] float heightValue, smoothness;
+    [SerializeField] float seed;
 
     void Start() {
+        seed = Random.Range(-1000000,1000000);
         Generation();
+    }
+
+    private void Update() {
+        if(Input.GetKeyDown(KeyCode.A)) {
+            seed = Random.Range(-1000000,1000000);
+            Generation();
+        } else if (Input.GetKeyDown(KeyCode.D)) {
+            lunarRockTilemap.ClearAllTiles();
+            lunarSoilTilemap.ClearAllTiles();
+            lunarCrustTilemap.ClearAllTiles();
+        }
     }
 
     void Generation() {
         for(int x=0;x<width;x++) {
-            int minHeight = height - 1;
-            int maxHeight = height + 2;
-
-            height = Random.Range(minHeight, maxHeight);
+            int height = Mathf.RoundToInt(heightValue * Mathf.PerlinNoise(x/smoothness, seed));
             int minRockSpawnDistance = height - minRockHeight;
             int maxRockSpawnDistance = height - maxRockHeight;
             int totalRockSpawnDistance = Random.Range(minRockSpawnDistance, maxRockSpawnDistance);
             for(int y=0;y<height;y++) {
                 if(y < totalRockSpawnDistance) {
-                    spawnObject(lunarRock, x, y);
+                    lunarRockTilemap.SetTile(new Vector3Int(x, y, 0), lunarRock);
                 } else {
-                    spawnObject(lunarSoil, x, y);
+                    lunarSoilTilemap.SetTile(new Vector3Int(x, y, 0), lunarSoil);
                 }
             }
             if(totalRockSpawnDistance == height) {
-                spawnObject(lunarRock, x, height);
+                lunarRockTilemap.SetTile(new Vector3Int(x, height, 0), lunarRock);
             } else {
-                spawnObject(lunarCrust, x, height);
+                lunarCrustTilemap.SetTile(new Vector3Int(x, height, 0), lunarCrust);
             }
         }
-    }
-
-    void spawnObject(GameObject obj, int width, int height) {
-        obj = Instantiate(obj, new Vector2(width, height), Quaternion.identity);
-        obj.transform.parent = this.transform;
     }
 }
