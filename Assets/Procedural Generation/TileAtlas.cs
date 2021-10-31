@@ -10,6 +10,7 @@ public class TileAtlas : ScriptableObject
     public TileClass lunarCrust;
     public TileClass lunarSoil;
     public TileClass lunarRock;
+    public TileClass moonRock;
 
     public TileClass coal;
     public TileClass iron;
