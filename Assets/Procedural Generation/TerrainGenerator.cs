@@ -5,26 +5,33 @@ using UnityEngine.Tilemaps;
 
 public class TerrainGenerator : MonoBehaviour
 {
-    public int lunarSoilLayer = 5;
+    [Header("Tile Sprites")]
     public Sprite log;
     public Sprite leaf;
     public Sprite lunarCrust;
     public Sprite lunarSoil;
     public Sprite lunarRock;
 
+    [Header("Trees")]
     public int treeChance = 10;
+    public int minTreeHeight = 3;
+    public int maxTreeHeight = 7;
+
+    [Header("Generation Settings")]
+    public int lunarSoilLayer = 5;
     public bool generateCaves = true;
     public float terrainAmount = 0.25f;
     public int worldSize = 100;
-    public float caveFreq = 0.05f;
-    public float terrainFreq = 0.05f;
     public float heightMultiplier = 4f;
     public int heightAddition = 25;
 
+    [Header("Noise Settings")]
+    public float caveFreq = 0.05f;
+    public float terrainFreq = 0.05f;
     public float seed;
     public Texture2D noiseTexture;
 
-    public List<GameObject> worldTiles = new List<GameObject>();
+    private List<Vector2> worldTiles = new List<Vector2>();
 
     private void Start() {
         seed = Random.Range(-1000000, 1000000);
@@ -43,11 +50,6 @@ public class TerrainGenerator : MonoBehaviour
                     tileSprite = lunarSoil;
                 } else {
                     tileSprite = lunarCrust;
-
-                    int t = Random.Range(0, treeChance);
-                    if(t == 1) {
-                        GenerateTree(x, y + 1);
-                    }
                 }
                 if(generateCaves) {
                     if(noiseTexture.GetPixel(x, y).r > terrainAmount) {
@@ -55,6 +57,14 @@ public class TerrainGenerator : MonoBehaviour
                     }
                 } else {
                     PlaceTile(tileSprite, x, y);
+                }
+                if(y >= height - 1) {
+                    int t = Random.Range(0, treeChance);
+                    if(t == 1) {
+                        if(worldTiles.Contains(new Vector2(x, y))) {
+                            GenerateTree(x, y + 1);
+                        }
+                    }
                 }
             }
         }
@@ -73,7 +83,20 @@ public class TerrainGenerator : MonoBehaviour
     }
 
     void GenerateTree(float x, float y) {
-        PlaceTile(log, x, y);
+        int treeHeight = Random.Range(minTreeHeight, maxTreeHeight);
+        for(int i=0;i<treeHeight;i++) {
+            PlaceTile(log, x, y + i);
+        }
+
+        PlaceTile(leaf, x, y + treeHeight);
+        PlaceTile(leaf, x, y + treeHeight + 1);
+        PlaceTile(leaf, x, y + treeHeight + 2);
+
+        PlaceTile(leaf, x - 1, y + treeHeight);
+        PlaceTile(leaf, x - 1, y + treeHeight + 1);
+
+        PlaceTile(leaf, x + 1, y + treeHeight);
+        PlaceTile(leaf, x + 1, y + treeHeight + 1);
     }
 
     public void PlaceTile(Sprite tileSprite, float x, float y) {
@@ -84,6 +107,6 @@ public class TerrainGenerator : MonoBehaviour
         newTile.name = tileSprite.name;
         newTile.transform.position = new Vector2(x + 0.5f, y + 0.5f);
 
-        worldTiles.Add(newTile);
+        worldTiles.Add(newTile.transform.position - (Vector3.one * 0.5f));
     }
 }
