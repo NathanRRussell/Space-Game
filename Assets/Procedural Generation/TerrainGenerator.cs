@@ -18,6 +18,7 @@ public class TerrainGenerator : MonoBehaviour
     public int maxTreeHeight = 7;
 
     [Header("Generation Settings")]
+    public int chunkSize = 16;
     public int lunarSoilLayer = 5;
     public bool generateCaves = true;
     public float terrainAmount = 0.25f;
@@ -31,12 +32,25 @@ public class TerrainGenerator : MonoBehaviour
     public float seed;
     public Texture2D noiseTexture;
 
+    private GameObject[] worldChunks;
     private List<Vector2> worldTiles = new List<Vector2>();
 
     private void Start() {
         seed = Random.Range(-1000000, 1000000);
         GenerateNoiseTexture();
+        CreateChunks();
         GenerateTerrain();
+    }
+
+    public void CreateChunks() {
+        int numChunks = worldSize/chunkSize;
+        worldChunks = new GameObject[numChunks];
+        for(int i=0;i<numChunks;i++) {
+            GameObject newChunk = new GameObject();
+            newChunk.name = i.ToString();
+            newChunk.transform.parent = this.transform;
+            worldChunks[i] = newChunk;
+        }
     }
 
     public void GenerateTerrain() {
@@ -82,7 +96,7 @@ public class TerrainGenerator : MonoBehaviour
         noiseTexture.Apply();
     }
 
-    void GenerateTree(float x, float y) {
+    void GenerateTree(int x, int y) {
         int treeHeight = Random.Range(minTreeHeight, maxTreeHeight);
         for(int i=0;i<treeHeight;i++) {
             PlaceTile(log, x, y + i);
@@ -99,9 +113,11 @@ public class TerrainGenerator : MonoBehaviour
         PlaceTile(leaf, x + 1, y + treeHeight + 1);
     }
 
-    public void PlaceTile(Sprite tileSprite, float x, float y) {
+    public void PlaceTile(Sprite tileSprite, int x, int y) {
         GameObject newTile = new GameObject();
-        newTile.transform.parent = this.transform;
+        float chunkCoords = Mathf.RoundToInt(x / chunkSize) * chunkSize;
+        chunkCoords /= chunkSize;
+        newTile.transform.parent = worldChunks[(int)chunkCoords].transform;
         newTile.AddComponent<SpriteRenderer>();
         newTile.GetComponent<SpriteRenderer>().sprite = tileSprite;
         newTile.name = tileSprite.name;
